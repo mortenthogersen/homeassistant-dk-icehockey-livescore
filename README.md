@@ -18,10 +18,10 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
 2. Add the resources to your Home Assistant via the UI:
    - Go to **Settings** → **Dashboards** → **Resources**
    - Click **+ ADD RESOURCE** (or **+** button)
-      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.2`
+      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.3`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
-   - Repeat for `hockey-ticker-card.js?v=1.0.1` and `hockey-table-card.js?v=1.0.0`
+   - Repeat for `hockey-ticker-card.js?v=1.0.2` and `hockey-table-card.js?v=1.0.0`
 
    **Note:** The version query parameter (e.g., `?v=1.0.2`) is used for cache busting. When you update the card files, increment the version number and update the resource URLs to ensure browsers load the latest version.
 
@@ -208,13 +208,16 @@ highlight_teams:
 
 All cards include version information:
 
-- **Hockey Scoreboard Card**: v1.0.2
-- **Hockey Ticker Card**: v1.0.1
+- **Hockey Scoreboard Card**: v1.0.3
+- **Hockey Ticker Card**: v1.0.2
 - **Hockey Table Card**: v1.0.0
 
 Version numbers are displayed in the card UI and logged to the browser console for debugging cache issues.
 
 ### Changelog
+
+#### Hockey Scoreboard Card v1.0.3
+- Updated: Date format changed to Danish format (e.g., "10. jan HH:mm") for upcoming matches
 
 #### Hockey Scoreboard Card v1.0.2
 - Updated: Upcoming matches now display date and time (dd/mm HH:mm) instead of just time
@@ -222,6 +225,9 @@ Version numbers are displayed in the card UI and logged to the browser console f
 #### Hockey Scoreboard Card v1.0.1
 - Fixed: Upcoming matches (BEFORE_MATCH status) now correctly display "Kommende kamp" with scheduled time instead of "SLUT"
 - Fixed: Scoreboard is now hidden when no match is found for the main team (only shows error message and other teams list if configured)
+
+#### Hockey Ticker Card v1.0.2
+- Updated: Date format changed to Danish format (e.g., "10. jan HH:mm") for upcoming matches
 
 #### Hockey Ticker Card v1.0.1
 - Updated: Upcoming matches now always display date and time (dd/mm HH:mm) instead of just time for today's matches

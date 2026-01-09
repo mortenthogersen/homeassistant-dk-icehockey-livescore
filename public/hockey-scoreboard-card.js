@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.2
+ * Version: 1.0.3
  * Last Updated: 2026-01-10 07:00:00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.2';
+  static VERSION = '1.0.3';
   
   constructor() {
     super();
@@ -797,11 +797,11 @@ class HockeyScoreboardCard extends HTMLElement {
     if (!startDate) return '';
     try {
       const date = new Date(startDate);
-      // Always show date and time for upcoming matches
-      const dateStr = date.toLocaleDateString('da-DK', {
-        day: '2-digit',
-        month: '2-digit'
-      });
+      // Always show date and time for upcoming matches in Danish format: "10. jan HH:mm"
+      const day = date.getDate();
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+      const month = monthNames[date.getMonth()];
+      const dateStr = `${day}. ${month}`;
       const timeStr = date.toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',

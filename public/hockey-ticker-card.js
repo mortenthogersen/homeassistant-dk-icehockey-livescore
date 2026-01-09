@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.1
+ * Version: 1.0.2
  * Last Updated: 2026-01-10 07:00:00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.1';
+  static VERSION = '1.0.2';
   
   constructor() {
     super();
@@ -535,11 +535,11 @@ class HockeyTickerCard extends HTMLElement {
       let dateTimeDisplay = '';
       if (match.start_date) {
         const startDate = new Date(match.start_date);
-        // Always show date and time for upcoming matches
-        const dateStr = startDate.toLocaleDateString('da-DK', {
-          day: '2-digit',
-          month: '2-digit'
-        });
+        // Always show date and time for upcoming matches in Danish format: "10. jan HH:mm"
+        const day = startDate.getDate();
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+        const month = monthNames[startDate.getMonth()];
+        const dateStr = `${day}. ${month}`;
         const timeStr = startDate.toLocaleTimeString('en-GB', {
           hour: '2-digit',
           minute: '2-digit',
