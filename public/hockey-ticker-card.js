@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.0
+ * Version: 1.0.1
  * Last Updated: 2026-01-10 07:00:00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.0';
+  static VERSION = '1.0.1';
   
   constructor() {
     super();

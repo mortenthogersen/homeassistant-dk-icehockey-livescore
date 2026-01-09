@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.1
+ * Version: 1.0.2
  * Last Updated: 2026-01-10 07:00:00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.1';
+  static VERSION = '1.0.2';
   
   constructor() {
     super();
