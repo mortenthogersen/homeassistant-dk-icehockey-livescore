@@ -18,12 +18,12 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
 2. Add the resources to your Home Assistant via the UI:
    - Go to **Settings** → **Dashboards** → **Resources**
    - Click **+ ADD RESOURCE** (or **+** button)
-   - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.0`
+      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.1`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
    - Repeat for `hockey-ticker-card.js?v=1.0.0` and `hockey-table-card.js?v=1.0.0`
 
-   **Note:** The `?v=1.0.0` query parameter is used for cache busting. When you update the card files, increment the version number (e.g., `?v=1.0.1`) and update the resource URLs to ensure browsers load the latest version.
+   **Note:** The `?v=1.0.1` (or appropriate version) query parameter is used for cache busting. When you update the card files, increment the version number (e.g., `?v=1.0.2`) and update the resource URLs to ensure browsers load the latest version.
 
 3. The resources should be available immediately (you may need to refresh your browser).
 
@@ -80,7 +80,8 @@ update_interval: 10
 
 - The main team's match is automatically excluded from the `other_teams` list
 - Goal notifications (green overlay) are shown only for the main team
-- If no match is found for the main team, an error message is displayed
+- If no match is found for the main team, the scoreboard is hidden and an error message is displayed
+- Upcoming matches (BEFORE_MATCH status) display "Kommende kamp" with the scheduled start time
 - The `other_teams` list shows all matches where any of the specified teams are playing
 
 ---
@@ -207,11 +208,17 @@ highlight_teams:
 
 All cards include version information:
 
-- **Hockey Scoreboard Card**: v1.0.0
+- **Hockey Scoreboard Card**: v1.0.1
 - **Hockey Ticker Card**: v1.0.0
 - **Hockey Table Card**: v1.0.0
 
 Version numbers are displayed in the card UI and logged to the browser console for debugging cache issues.
+
+### Changelog
+
+#### Hockey Scoreboard Card v1.0.1
+- Fixed: Upcoming matches (BEFORE_MATCH status) now correctly display "Kommende kamp" with scheduled time instead of "SLUT"
+- Fixed: Scoreboard is now hidden when no match is found for the main team (only shows error message and other teams list if configured)
 
 ## Troubleshooting
 

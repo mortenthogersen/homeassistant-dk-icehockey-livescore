@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.0
+ * Version: 1.0.1
  * Last Updated: 2026-01-10 07:00:00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.0';
+  static VERSION = '1.0.1';
   
   constructor() {
     super();
@@ -129,8 +129,9 @@ class HockeyScoreboardCard extends HTMLElement {
         
         this.loadGameData();
       } else {
-        // No match found for main_team - show error
+        // No match found for main_team - hide scoreboard and show error
         console.log(`[Scoreboard] No match found for ${this.config.main_team}`);
+        this.hideScoreboard();
         this.showError(`Ingen kamp fundet for ${this.config.main_team} i dag`);
         this.config.data_url = null;
         this.config.game_id = null;
@@ -146,6 +147,7 @@ class HockeyScoreboardCard extends HTMLElement {
       }
     } catch (error) {
       console.error('Error fetching league matches:', error);
+      this.hideScoreboard();
       this.showError('Kunne ikke indlæse kamp program');
       this.config.data_url = null;
       this.config.game_id = null;
@@ -480,7 +482,13 @@ class HockeyScoreboardCard extends HTMLElement {
         if (errorEl) errorEl.style.display = 'none';
 
         const gameData = data.data.gameData;
-        const isGameFinished = gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0;
+        
+        // Check if match hasn't started yet (BEFORE_MATCH status from league-matches)
+        const isBeforeMatch = this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH';
+        
+        // Game is finished only if it's END-GAME AND not a BEFORE_MATCH match
+        // For BEFORE_MATCH, gameStatus might be 0 meaning "not started", not "finished"
+        const isGameFinished = !isBeforeMatch && (gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0);
 
         // main_team is always set (required), so we don't auto-switch to other matches
 
@@ -488,7 +496,7 @@ class HockeyScoreboardCard extends HTMLElement {
         const isIntermission = gameData.liveTimeGamePhase && 
                                gameData.liveTimeGamePhase.toUpperCase().includes('INTERMISSION');
         
-        if (!isGameFinished && !isIntermission) {
+        if ((!isGameFinished || isBeforeMatch) && !isIntermission) {
           const currentGoalCount = (data.data.homeGoals?.length || 0) + (data.data.awayGoals?.length || 0);
 
           // Update stored game time and timestamp when new data arrives
@@ -810,26 +818,28 @@ class HockeyScoreboardCard extends HTMLElement {
     const gameData = this.gameData.data.gameData;
     const periodEl = this.shadowRoot.querySelector('#period');
 
-    // Check if game is finished
-    if (gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0) {
-      // Game is finished - show final time/status
-      if (periodEl) periodEl.innerHTML = 'SLUT';
-      return;
-    }
-
-    // Check if game hasn't started yet (BEFORE_MATCH)
+    // Check if game hasn't started yet (BEFORE_MATCH) - check this FIRST
     // We can detect this from liveTimeString or by checking if we have match info
-    const isBeforeMatch = gameData.liveTimeString === 'BEFORE_MATCH' || 
-                         (gameData.liveTime === 0 && gameData.liveTimePeriod === 0) ||
-                         (this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH');
+    // For BEFORE_MATCH matches, gameStatus might be 0 meaning "not started", not "finished"
+    const isBeforeMatch = this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH' ||
+                         gameData.liveTimeString === 'BEFORE_MATCH' || 
+                         (gameData.liveTime === 0 && gameData.liveTimePeriod === 0 && !gameData.liveTimeString);
     
     if (isBeforeMatch) {
-      // Game hasn't started - show scheduled start time
+      // Game hasn't started - show scheduled start time with "Kommende kamp"
       const startTime = this.currentMatchInfo?.start_date || gameData.scheduledTime || gameData.startTime;
       if (periodEl) {
         const formattedTime = this.formatStartTime(startTime) || 'Ikke fastlagt';
-        periodEl.innerHTML = `<span class="period-status">Kommende</span> - <span class="time-minutes">${formattedTime}</span>`;
+        periodEl.innerHTML = `<span class="period-status">Kommende kamp</span> - <span class="time-minutes">${formattedTime}</span>`;
       }
+      return;
+    }
+
+    // Check if game is finished (check AFTER_MATCH status first, then END-GAME)
+    const isAfterMatch = this.currentMatchInfo && this.currentMatchInfo.status === 'AFTER_MATCH';
+    if (isAfterMatch || gameData.liveTimeString === 'END-GAME') {
+      // Game is finished - show final time/status
+      if (periodEl) periodEl.innerHTML = 'SLUT';
       return;
     }
 
@@ -876,6 +886,9 @@ class HockeyScoreboardCard extends HTMLElement {
   updateScoreboard(data) {
     const gameData = data.data.gameData;
     const shadow = this.shadowRoot;
+
+    // Show scoreboard when we have valid match data
+    this.showScoreboard();
 
     // Update finished match display if available
     if (this.finishedMatchInfo) {
@@ -974,6 +987,28 @@ class HockeyScoreboardCard extends HTMLElement {
       </div>
     `;
     finishedEl.style.display = 'block';
+  }
+
+  hideScoreboard() {
+    const scoreboardContainer = this.shadowRoot.querySelector('.scoreboard-container');
+    const gameInfo = this.shadowRoot.querySelector('.game-info');
+    if (scoreboardContainer) {
+      scoreboardContainer.style.display = 'none';
+    }
+    if (gameInfo) {
+      gameInfo.style.display = 'none';
+    }
+  }
+
+  showScoreboard() {
+    const scoreboardContainer = this.shadowRoot.querySelector('.scoreboard-container');
+    const gameInfo = this.shadowRoot.querySelector('.game-info');
+    if (scoreboardContainer) {
+      scoreboardContainer.style.display = 'flex';
+    }
+    if (gameInfo) {
+      gameInfo.style.display = 'block';
+    }
   }
 
   showError(message) {
@@ -1086,13 +1121,14 @@ class HockeyScoreboardCard extends HTMLElement {
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .game-info {
+          display: none;
           text-align: center;
           margin-bottom: 16px;
           color: var(--primary-text-color, #333);
           font-size: 13px;
         }
         .scoreboard-container {
-          display: flex;
+          display: none;
           justify-content: space-between;
           align-items: center;
           gap: 16px;
@@ -1393,7 +1429,6 @@ class HockeyScoreboardCard extends HTMLElement {
         </div>
         <div id="goalNotification"></div>
         <div class="last-update" id="lastUpdate"></div>
-        <div class="version-info">v${HockeyScoreboardCard.VERSION}</div>
         <div class="error"></div>
         <div id="otherTeamsSection" class="other-teams-section" style="display: none;">
           <div class="other-teams-title">Andre kampe</div>
