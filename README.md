@@ -18,10 +18,12 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
 2. Add the resources to your Home Assistant via the UI:
    - Go to **Settings** → **Dashboards** → **Resources**
    - Click **+ ADD RESOURCE** (or **+** button)
-   - Enter the URL: `/local/hockey-scoreboard-card.js`
+   - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.0`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
-   - Repeat for `hockey-ticker-card.js` and `hockey-table-card.js`
+   - Repeat for `hockey-ticker-card.js?v=1.0.0` and `hockey-table-card.js?v=1.0.0`
+
+   **Note:** The `?v=1.0.0` query parameter is used for cache busting. When you update the card files, increment the version number (e.g., `?v=1.0.1`) and update the resource URLs to ensure browsers load the latest version.
 
 3. The resources should be available immediately (you may need to refresh your browser).
 
@@ -217,10 +219,11 @@ Version numbers are displayed in the card UI and logged to the browser console f
 
 If you're not seeing updates after making changes:
 
-1. **Hard Refresh**: Press `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac) to clear browser cache
-2. **Clear Home Assistant Cache**: In Home Assistant, go to Settings → System → Reload Resources
-3. **Mobile Devices**: Clear the app cache or restart the Home Assistant app
-4. **Check Console**: Open browser developer tools (F12) and check the console for version numbers to confirm the correct card is loaded
+1. **Update Version Parameter**: If you've updated the card files, increment the version number in the resource URLs (e.g., change `?v=1.0.0` to `?v=1.0.1`) in **Settings** → **Dashboards** → **Resources**. This forces browsers to load the new version.
+2. **Hard Refresh**: Press `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac) to clear browser cache
+3. **Clear Home Assistant Cache**: In Home Assistant, go to Settings → System → Reload Resources
+4. **Mobile Devices**: Clear the app cache or restart the Home Assistant app
+5. **Check Console**: Open browser developer tools (F12) and check the console for version numbers to confirm the correct card is loaded
 
 ### Card Not Appearing
 
