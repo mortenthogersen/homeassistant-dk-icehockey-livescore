@@ -535,32 +535,17 @@ class HockeyTickerCard extends HTMLElement {
       let dateTimeDisplay = '';
       if (match.start_date) {
         const startDate = new Date(match.start_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const matchDay = new Date(startDate);
-        matchDay.setHours(0, 0, 0, 0);
-        
-        // Check if match is today or future date
-        if (matchDay.getTime() === today.getTime()) {
-          // Today - just show time
-          dateTimeDisplay = startDate.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          });
-        } else {
-          // Future date - show date and time
-          const dateStr = startDate.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit'
-          });
-          const timeStr = startDate.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          });
-          dateTimeDisplay = `${dateStr} ${timeStr}`;
-        }
+        // Always show date and time for upcoming matches
+        const dateStr = startDate.toLocaleDateString('da-DK', {
+          day: '2-digit',
+          month: '2-digit'
+        });
+        const timeStr = startDate.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        dateTimeDisplay = `${dateStr} ${timeStr}`;
       }
       
       display = `

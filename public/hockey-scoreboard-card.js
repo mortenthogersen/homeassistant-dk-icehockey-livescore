@@ -752,12 +752,7 @@ class HockeyScoreboardCard extends HTMLElement {
       }
     } else if (match.status === 'BEFORE_MATCH') {
       statusClass = 'upcoming';
-      try {
-        const startDate = new Date(match.start_date);
-        statusText = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-      } catch (e) {
-        statusText = match.start_date || '';
-      }
+      statusText = this.formatStartTime(match.start_date) || '';
     } else if (match.status === 'AFTER_MATCH') {
       statusClass = 'finished';
       statusText = 'SLUT';
@@ -802,11 +797,17 @@ class HockeyScoreboardCard extends HTMLElement {
     if (!startDate) return '';
     try {
       const date = new Date(startDate);
-      return date.toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
+      // Always show date and time for upcoming matches
+      const dateStr = date.toLocaleDateString('da-DK', {
+        day: '2-digit',
+        month: '2-digit'
       });
+      const timeStr = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      return `${dateStr} ${timeStr}`;
     } catch (e) {
       return startDate;
     }
