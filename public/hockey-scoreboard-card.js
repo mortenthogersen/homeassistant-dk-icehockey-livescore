@@ -797,10 +797,20 @@ class HockeyScoreboardCard extends HTMLElement {
     if (!startDate) return '';
     try {
       const date = new Date(startDate);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('[Scoreboard] Invalid date:', startDate);
+        return '';
+      }
       // Always show date and time for upcoming matches in Danish format: "10. jan HH:mm"
       const day = date.getDate();
       const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-      const month = monthNames[date.getMonth()];
+      const monthIndex = date.getMonth();
+      if (monthIndex < 0 || monthIndex > 11) {
+        console.warn('[Scoreboard] Invalid month index:', monthIndex);
+        return '';
+      }
+      const month = monthNames[monthIndex];
       const dateStr = `${day}. ${month}`;
       const timeStr = date.toLocaleTimeString('en-GB', {
         hour: '2-digit',
@@ -809,7 +819,8 @@ class HockeyScoreboardCard extends HTMLElement {
       });
       return `${dateStr} ${timeStr}`;
     } catch (e) {
-      return startDate;
+      console.error('[Scoreboard] Error formatting date:', e, startDate);
+      return '';
     }
   }
 
@@ -952,15 +963,6 @@ class HockeyScoreboardCard extends HTMLElement {
         this.previousScore = currentScore;
       }
       
-      const gameDateEl = shadow.querySelector('#gameDate');
-      const gameDivisionEl = shadow.querySelector('#gameDivision');
-      if (gameDateEl && gameData.scheduledDate) {
-        gameDateEl.textContent = gameData.scheduledDate.formattedLong || '';
-      }
-      if (gameDivisionEl) {
-        gameDivisionEl.textContent = gameData.divisionLongname || '';
-      }
-      
       this.updateClock();
       
       if (data.lastUpdate) {
@@ -992,23 +994,15 @@ class HockeyScoreboardCard extends HTMLElement {
 
   hideScoreboard() {
     const scoreboardContainer = this.shadowRoot.querySelector('.scoreboard-container');
-    const gameInfo = this.shadowRoot.querySelector('.game-info');
     if (scoreboardContainer) {
       scoreboardContainer.style.display = 'none';
-    }
-    if (gameInfo) {
-      gameInfo.style.display = 'none';
     }
   }
 
   showScoreboard() {
     const scoreboardContainer = this.shadowRoot.querySelector('.scoreboard-container');
-    const gameInfo = this.shadowRoot.querySelector('.game-info');
     if (scoreboardContainer) {
       scoreboardContainer.style.display = 'flex';
-    }
-    if (gameInfo) {
-      gameInfo.style.display = 'block';
     }
   }
 
@@ -1120,13 +1114,6 @@ class HockeyScoreboardCard extends HTMLElement {
           border-radius: 8px;
           padding: 16px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .game-info {
-          display: none;
-          text-align: center;
-          margin-bottom: 16px;
-          color: var(--primary-text-color, #333);
-          font-size: 13px;
         }
         .scoreboard-container {
           display: none;
@@ -1404,10 +1391,6 @@ class HockeyScoreboardCard extends HTMLElement {
       </style>
       <div class="card">
         <div id="finishedMatch"></div>
-        <div class="game-info">
-          <div id="gameDate"></div>
-          <div id="gameDivision"></div>
-        </div>
         <div class="scoreboard-container">
           <div class="team-section">
             <div class="team-logo-container">

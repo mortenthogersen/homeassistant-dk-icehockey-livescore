@@ -534,18 +534,32 @@ class HockeyTickerCard extends HTMLElement {
       // Upcoming match - format: (logo) HOME vs AWAY (logo) date time
       let dateTimeDisplay = '';
       if (match.start_date) {
-        const startDate = new Date(match.start_date);
-        // Always show date and time for upcoming matches in Danish format: "10. jan HH:mm"
-        const day = startDate.getDate();
-        const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-        const month = monthNames[startDate.getMonth()];
-        const dateStr = `${day}. ${month}`;
-        const timeStr = startDate.toLocaleTimeString('en-GB', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        dateTimeDisplay = `${dateStr} ${timeStr}`;
+        try {
+          const startDate = new Date(match.start_date);
+          // Check if date is valid
+          if (isNaN(startDate.getTime())) {
+            console.warn('[Ticker] Invalid date:', match.start_date);
+            dateTimeDisplay = '';
+          } else {
+            // Always show date and time for upcoming matches in Danish format: "10. jan HH:mm"
+            const day = startDate.getDate();
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+            const monthIndex = startDate.getMonth();
+            if (monthIndex >= 0 && monthIndex <= 11) {
+              const month = monthNames[monthIndex];
+              const dateStr = `${day}. ${month}`;
+              const timeStr = startDate.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              });
+              dateTimeDisplay = `${dateStr} ${timeStr}`;
+            }
+          }
+        } catch (e) {
+          console.error('[Ticker] Error formatting date:', e, match.start_date);
+          dateTimeDisplay = '';
+        }
       }
       
       display = `
