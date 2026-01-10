@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.5
+ * Version: 1.0.6
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.5';
+  static VERSION = '1.0.6';
   
   constructor() {
     super();
@@ -802,7 +802,7 @@ class HockeyScoreboardCard extends HTMLElement {
         console.warn('[Scoreboard] Invalid date:', startDate);
         return '';
       }
-      // Always show date and time for upcoming matches in Danish format: "10. jan. kl. 19.00"
+      // Always show date and time for upcoming matches in Danish format: "10. jan. @ 19.00"
       const day = date.getDate();
       const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
       const monthIndex = date.getMonth();
@@ -814,7 +814,7 @@ class HockeyScoreboardCard extends HTMLElement {
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const timeStr = `${hours}.${minutes}`;
-      return `${day}. ${month}. kl. ${timeStr}`;
+      return `${day}. ${month}. @ ${timeStr}`;
     } catch (e) {
       console.error('[Scoreboard] Error formatting date:', e, startDate);
       return '';
