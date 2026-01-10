@@ -1,7 +1,7 @@
 /**
  * Hockey Scoreboard Card
  * Version: 1.0.5
- * Last Updated: 2026-01-10 07:00:00
+ * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
  * - Live game scoreboard with auto-updates

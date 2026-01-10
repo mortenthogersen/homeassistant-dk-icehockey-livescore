@@ -1,7 +1,7 @@
 /**
  * Hockey Table Card
  * Version: 1.0.0
- * Last Updated: 2026-01-10 07:00:00
+ * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
  * - Shows current league standings/points table

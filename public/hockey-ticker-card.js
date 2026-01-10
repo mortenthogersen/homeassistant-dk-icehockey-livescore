@@ -1,7 +1,7 @@
 /**
  * Hockey Scoreboard Ticker Card
  * Version: 1.0.4
- * Last Updated: 2026-01-10 07:00:00
+ * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
  * - Continuous marquee scroll through all matches
