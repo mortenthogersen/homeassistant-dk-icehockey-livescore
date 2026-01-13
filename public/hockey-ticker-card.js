@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.9
+ * Version: 1.0.10
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.9';
+  static VERSION = '1.0.10';
   
   constructor() {
     super();
@@ -94,8 +94,20 @@ class HockeyTickerCard extends HTMLElement {
 
   updateRunningTimes() {
     // Update ticker display to refresh running times for live matches
-    // This will recalculate approximate times based on elapsed time
-    if (this.matches.length > 0) {
+    // Only update if we have live matches to avoid unnecessary re-renders
+    const hasLiveMatches = this.matches.some(m => {
+      const matchDetail = this.matchDetails[m.id];
+      if (matchDetail && matchDetail.gameData) {
+        const gameData = matchDetail.gameData;
+        return (gameData.liveTime > 0) || (gameData.liveTimePeriod > 0) || 
+               (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
+      }
+      return m.status === 'LIVE' || m.status === 'DURING_MATCH';
+    });
+    
+    // Only update ticker if we have live matches (to update running times)
+    // This prevents unnecessary re-renders that cause logo blinking
+    if (hasLiveMatches && this.matches.length > 0) {
       this.updateTicker();
     }
   }
@@ -303,7 +315,20 @@ class HockeyTickerCard extends HTMLElement {
 
   async loadLiveMatchDetails() {
     // Fetch detailed data for LIVE matches
-    const liveMatches = this.matches.filter(m => m.status === 'LIVE' || m.status === 'DURING_MATCH');
+    // Also check matches that might be live even if status says BEFORE_MATCH
+    const liveMatches = this.matches.filter(m => {
+      // Check if match detail already shows it's live
+      const matchDetail = this.matchDetails[m.id];
+      if (matchDetail && matchDetail.gameData) {
+        const gameData = matchDetail.gameData;
+        const isLive = (gameData.liveTime > 0) || 
+                      (gameData.liveTimePeriod > 0) || 
+                      (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
+        if (isLive) return true;
+      }
+      // Otherwise check status
+      return m.status === 'LIVE' || m.status === 'DURING_MATCH';
+    });
     
     for (const match of liveMatches) {
       try {
@@ -330,8 +355,13 @@ class HockeyTickerCard extends HTMLElement {
             this.matchDetails[match.id].awayGoals = data.data.awayGoals || [];
             this.matchDetails[match.id].fullData = data; // Store full data for goal notification
             
+            // Check if this match should be treated as live (even if status was BEFORE_MATCH)
+            const hasGameStarted = (gameData.liveTime > 0) || 
+                                  (gameData.liveTimePeriod > 0) || 
+                                  (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
+            
             // Only update if game is live and not finished
-            if (gameData.liveTimeString !== 'END-GAME' && gameData.gameStatus !== 0) {
+            if (hasGameStarted && gameData.liveTimeString !== 'END-GAME' && gameData.gameStatus !== 0) {
               const currentGoalCount = (data.data.homeGoals?.length || 0) + (data.data.awayGoals?.length || 0);
 
               // Update stored game time and timestamp when new data arrives
@@ -378,7 +408,7 @@ class HockeyTickerCard extends HTMLElement {
               // Store current score for comparison (update it each time for goal notification)
               const currentScore = `${gameData.homeTeamScore || 0}:${gameData.awayTeamScore || 0}`;
               this.previousScores[match.id] = currentScore;
-            } else {
+            } else if (hasGameStarted) {
               // Game finished - clear timing info
               this.matchDetails[match.id].lastUpdateTimestamp = null;
               this.matchDetails[match.id].lastGameTimeSeconds = 0;
@@ -510,7 +540,20 @@ class HockeyTickerCard extends HTMLElement {
     
     let display = '';
     
-    if (match.status === 'LIVE' || match.status === 'DURING_MATCH') {
+    // Check if match is actually live (prioritize game data over league-matches status)
+    const matchDetail = this.matchDetails[match.id];
+    let isActuallyLive = false;
+    if (matchDetail && matchDetail.gameData) {
+      const gameData = matchDetail.gameData;
+      // If game has liveTime, scores, or period > 0, it's live (not before match)
+      isActuallyLive = (gameData.liveTime > 0) || 
+                      (gameData.liveTimePeriod > 0) || 
+                      (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0) ||
+                      (gameData.liveTimeString && gameData.liveTimeString !== 'BEFORE_MATCH');
+    }
+    
+    // Treat as live if status says LIVE/DURING_MATCH OR if game data shows it's live
+    if (match.status === 'LIVE' || match.status === 'DURING_MATCH' || isActuallyLive) {
       // Get period and time from detailed match data if available
       let periodTimeDisplay = '';
       let homeScore = match.results?.score?.final?.score_home || 0;
@@ -584,7 +627,7 @@ class HockeyTickerCard extends HTMLElement {
           <span class="status live">${periodTimeDisplay}</span>
         </div>
       `;
-    } else if (match.status === 'BEFORE_MATCH') {
+    } else if (match.status === 'BEFORE_MATCH' && !isActuallyLive) {
       // Upcoming match - format: (logo) HOME vs AWAY (logo) date time
       let dateTimeDisplay = '';
       if (match.start_date) {
