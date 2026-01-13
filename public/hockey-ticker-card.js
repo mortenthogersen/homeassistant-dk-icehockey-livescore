@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.10
+ * Version: 1.0.11
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.10';
+  static VERSION = '1.0.11';
   
   constructor() {
     super();
@@ -287,7 +287,8 @@ class HockeyTickerCard extends HTMLElement {
         
         this.matches = filteredMatches;
         
-        // Fetch detailed data for LIVE matches to get accurate time
+        // Fetch detailed data for all matches (not just LIVE status)
+        // This ensures we catch matches that are live but still have BEFORE_MATCH status
         // loadLiveMatchDetails will call updateTicker when done
         await this.loadLiveMatchDetails();
       } else {
@@ -314,23 +315,29 @@ class HockeyTickerCard extends HTMLElement {
   }
 
   async loadLiveMatchDetails() {
-    // Fetch detailed data for LIVE matches
-    // Also check matches that might be live even if status says BEFORE_MATCH
-    const liveMatches = this.matches.filter(m => {
-      // Check if match detail already shows it's live
+    // Fetch detailed data for all matches (not just those with LIVE status)
+    // This ensures we catch matches that are live but still have BEFORE_MATCH status in league-matches
+    // We'll fetch for all matches and then determine if they're live based on game data
+    const matchesToFetch = this.matches.filter(m => {
+      // Skip if we already have recent data for this match
       const matchDetail = this.matchDetails[m.id];
       if (matchDetail && matchDetail.gameData) {
+        // Only skip if we have data and it's not live (to avoid unnecessary fetches for finished matches)
         const gameData = matchDetail.gameData;
         const isLive = (gameData.liveTime > 0) || 
                       (gameData.liveTimePeriod > 0) || 
                       (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
-        if (isLive) return true;
+        // If it's live, we want to keep updating it
+        // If it's finished (END-GAME), we can skip
+        if (gameData.liveTimeString === 'END-GAME' || (!isLive && gameData.gameStatus === 0)) {
+          return false; // Skip finished matches
+        }
       }
-      // Otherwise check status
-      return m.status === 'LIVE' || m.status === 'DURING_MATCH';
+      // Fetch for LIVE/DURING_MATCH status, or BEFORE_MATCH (might have started)
+      return m.status === 'LIVE' || m.status === 'DURING_MATCH' || m.status === 'BEFORE_MATCH';
     });
     
-    for (const match of liveMatches) {
+    for (const match of matchesToFetch) {
       try {
         const response = await fetch(`https://s3-eu-west-1.amazonaws.com/den.hokejovyzapis.cz/widget/esports/match/${match.id}.json`);
         if (response.ok) {

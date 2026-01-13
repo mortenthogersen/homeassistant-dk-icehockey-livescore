@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.11
+ * Version: 1.0.12
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.11';
+  static VERSION = '1.0.12';
   
   constructor() {
     super();
@@ -289,7 +289,23 @@ class HockeyScoreboardCard extends HTMLElement {
   }
   
   async loadOtherTeamDetails() {
-    const liveMatches = this.otherMatches.filter(m => m.status === 'LIVE' || m.status === 'DURING_MATCH');
+    // Fetch detailed data for all matches (not just LIVE status)
+    // This ensures we catch matches that are live but still have BEFORE_MATCH status
+    const matchesToFetch = this.otherMatches.filter(m => {
+      // Skip if we already have recent data for finished matches
+      const matchDetail = this.otherMatchDetails[m.id];
+      if (matchDetail && matchDetail.gameData) {
+        const gameData = matchDetail.gameData;
+        // If it's finished (END-GAME), we can skip
+        if (gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0) {
+          return false; // Skip finished matches
+        }
+      }
+      // Fetch for LIVE/DURING_MATCH status, or BEFORE_MATCH (might have started)
+      return m.status === 'LIVE' || m.status === 'DURING_MATCH' || m.status === 'BEFORE_MATCH';
+    });
+    
+    const liveMatches = matchesToFetch;
     
     for (const match of liveMatches) {
       try {
