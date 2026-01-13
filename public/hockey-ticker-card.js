@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.15
+ * Version: 1.0.16
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.15';
+  static VERSION = '1.0.16';
   
   constructor() {
     super();
@@ -28,6 +28,8 @@ class HockeyTickerCard extends HTMLElement {
     // Cache for league-matches (fetch once per day)
     this.cachedLeagueMatches = null;
     this.cachedLeagueMatchesDate = null;
+    // Track previous match IDs to detect changes
+    this.previousMatchIds = null;
     
     // Log version for debugging cache issues
     console.log(`[HockeyTickerCard] Version ${HockeyTickerCard.VERSION} loaded at ${new Date().toISOString()}`);
@@ -72,7 +74,11 @@ class HockeyTickerCard extends HTMLElement {
   connectedCallback() {
     this.render();
     this.loadMatches();
-    this.dataInterval = setInterval(() => this.loadMatches(), this.config.update_interval * 1000);
+    // Only reload matches periodically, but don't regenerate HTML unless matches change
+    this.dataInterval = setInterval(() => {
+      // Load matches will check for changes internally
+      this.loadMatches();
+    }, this.config.update_interval * 1000);
     
     // Start clock interval to update running times for live matches
     this.clockInterval = setInterval(() => {
@@ -359,10 +365,16 @@ class HockeyTickerCard extends HTMLElement {
         
         this.matches = filteredMatches;
         
+        // Check if matches have changed (to prevent unnecessary HTML regeneration)
+        const currentMatchIds = this.matches.map(m => m.id).sort().join(',');
+        const matchesChanged = this.previousMatchIds !== currentMatchIds;
+        if (matchesChanged) {
+          this.previousMatchIds = currentMatchIds;
+        }
+        
         // Fetch detailed data for all matches (not just LIVE status)
         // This ensures we catch matches that are live but still have BEFORE_MATCH status
-        // loadLiveMatchDetails will call updateTicker when done
-        await this.loadLiveMatchDetails();
+        await this.loadLiveMatchDetails(matchesChanged);
       } else {
         // No matches found after filtering - show message
         this.matches = [];
@@ -386,7 +398,7 @@ class HockeyTickerCard extends HTMLElement {
     }
   }
 
-  async loadLiveMatchDetails() {
+  async loadLiveMatchDetails(shouldUpdateDisplay = true) {
     // Fetch detailed data for all matches (not just those with LIVE status)
     // This ensures we catch matches that are live but still have BEFORE_MATCH status in league-matches
     // We'll fetch for all matches and then determine if they're live based on game data
@@ -502,9 +514,9 @@ class HockeyTickerCard extends HTMLElement {
       }
     }
     
-    // Update ticker display with new data (only if not already updated)
+    // Update ticker display only if matches have changed (to prevent logo blinking)
     // This is called from loadMatches, so we update the ticker here
-    if (this.matches.length > 0) {
+    if (shouldUpdateDisplay && this.matches.length > 0) {
       this.updateTicker();
     }
   }

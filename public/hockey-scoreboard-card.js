@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.16
+ * Version: 1.0.17
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.16';
+  static VERSION = '1.0.17';
   
   constructor() {
     super();
@@ -37,6 +37,8 @@ class HockeyScoreboardCard extends HTMLElement {
     // Cache for league-matches (fetch once per day)
     this.cachedLeagueMatches = null;
     this.cachedLeagueMatchesDate = null;
+    // Track previous match IDs to detect changes
+    this.previousOtherMatchIds = null;
     
     // Log version for debugging cache issues
     console.log(`[HockeyScoreboardCard] Version ${HockeyScoreboardCard.VERSION} loaded at ${new Date().toISOString()}`);
@@ -336,8 +338,12 @@ class HockeyScoreboardCard extends HTMLElement {
       // Load detailed data for LIVE matches
       await this.loadOtherTeamDetails();
       
-      // Update display
-      this.updateOtherTeamsDisplay();
+      // Only update display if matches have changed (to prevent logo blinking)
+      const currentMatchIds = this.otherMatches.map(m => m.id).sort().join(',');
+      if (this.previousOtherMatchIds !== currentMatchIds) {
+        this.previousOtherMatchIds = currentMatchIds;
+        this.updateOtherTeamsDisplay();
+      }
       
       // Start interval to update running times for other teams
       if (this.clockInterval) {
