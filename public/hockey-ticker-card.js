@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.12
+ * Version: 1.0.13
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.12';
+  static VERSION = '1.0.13';
   
   constructor() {
     super();
@@ -222,6 +222,8 @@ class HockeyTickerCard extends HTMLElement {
     // Show the goal notification overlay
     const notificationEl = this.shadowRoot.querySelector('#goalNotification');
     if (notificationEl) {
+      console.log('[Ticker] Showing goal notification:', latestGoal.newScore, teamShortcut);
+      
       // Format scorer and assists text
       const scorerText = `${latestGoal.scoredBy.playerFirstname} ${latestGoal.scoredBy.playerLastname}`;
       let assistText = '';
@@ -233,7 +235,7 @@ class HockeyTickerCard extends HTMLElement {
         assistText += ')';
       }
       
-      notificationEl.innerHTML = `
+      const notificationHTML = `
         <div class="goal-notification-content">
           <div class="goal-team-score-line">
             ${teamLogo ? `<img src="${teamLogo}" class="goal-team-logo" onerror="this.style.display='none'">` : ''}
@@ -244,7 +246,12 @@ class HockeyTickerCard extends HTMLElement {
           </div>
         </div>
       `;
+      
+      notificationEl.innerHTML = notificationHTML;
       notificationEl.style.display = 'flex';
+      notificationEl.style.opacity = '1';
+      
+      console.log('[Ticker] Goal notification HTML set, display:', notificationEl.style.display);
       
       // Store current score for next comparison
       this.previousScores[matchId] = latestGoal.newScore;
@@ -258,10 +265,15 @@ class HockeyTickerCard extends HTMLElement {
           notificationEl.innerHTML = '';
         }, 500);
       }, 8000);
+    } else {
+      console.error('[Ticker] Goal notification element not found!');
     }
     
-    // Update ticker with new score
-    this.updateTicker();
+    // Update ticker with new score (but don't let it interfere with notification)
+    // Use setTimeout to ensure notification is displayed first
+    setTimeout(() => {
+      this.updateTicker();
+    }, 100);
   }
 
   async loadMatches() {
@@ -926,6 +938,7 @@ class HockeyTickerCard extends HTMLElement {
           border-radius: 8px;
           opacity: 1;
           transition: opacity 0.5s;
+          pointer-events: none;
         }
         .goal-notification-content {
           display: flex;
@@ -961,7 +974,7 @@ class HockeyTickerCard extends HTMLElement {
           opacity: 0.9;
         }
       </style>
-      <div class="card">
+      <div class="card" style="position: relative;">
         <div class="ticker-container">
           <div id="tickerContent">
             <div class="ticker-item">Loading...</div>

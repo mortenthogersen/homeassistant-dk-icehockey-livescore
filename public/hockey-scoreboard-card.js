@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.13
+ * Version: 1.0.14
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.13';
+  static VERSION = '1.0.14';
   
   constructor() {
     super();
@@ -1191,6 +1191,8 @@ class HockeyScoreboardCard extends HTMLElement {
     // Update the goal notification area inside the card
     const notificationEl = this.shadowRoot.querySelector('#goalNotification');
     if (notificationEl) {
+      console.log('[Scoreboard] Showing goal notification:', latestGoal.newScore, teamShortcut);
+      
       // Format scorer and assists text
       const scorerText = `${latestGoal.scoredBy.playerFirstname} ${latestGoal.scoredBy.playerLastname}`;
       let assistText = '';
@@ -1202,7 +1204,7 @@ class HockeyScoreboardCard extends HTMLElement {
         assistText += ')';
       }
       
-      notificationEl.innerHTML = `
+      const notificationHTML = `
         <div class="goal-notification-content">
           <div class="goal-team-score-line">
             ${teamLogo ? `<img src="${teamLogo}" class="goal-team-logo" onerror="this.style.display='none'">` : ''}
@@ -1213,7 +1215,12 @@ class HockeyScoreboardCard extends HTMLElement {
           </div>
         </div>
       `;
+      
+      notificationEl.innerHTML = notificationHTML;
       notificationEl.style.display = 'block';
+      notificationEl.style.opacity = '1';
+      
+      console.log('[Scoreboard] Goal notification HTML set, display:', notificationEl.style.display);
       
       // Store current score for next comparison
       this.previousScore = latestGoal.newScore;
@@ -1227,6 +1234,8 @@ class HockeyScoreboardCard extends HTMLElement {
           notificationEl.innerHTML = '';
         }, 500);
       }, 8000);
+    } else {
+      console.error('[Scoreboard] Goal notification element not found!');
     }
   }
 
