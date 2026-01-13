@@ -63,6 +63,7 @@ Displays a full scoreboard for your main team at the top, with other teams shown
 | `league_id` | number | No | 1 | League ID |
 | `season` | number | No | 2025 | Season year |
 | `update_interval` | number | No | 10 | Update interval in seconds |
+| `league_matches_url` | string | No | `/local/league-matches/{season}/{league_id}.json` | URL to league-matches JSON file (defaults to local file) |
 
 ### Example Configuration
 
