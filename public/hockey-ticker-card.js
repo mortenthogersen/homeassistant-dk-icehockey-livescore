@@ -408,8 +408,8 @@ class HockeyTickerCard extends HTMLElement {
               // Store current score for comparison (update it each time for goal notification)
               const currentScore = `${gameData.homeTeamScore || 0}:${gameData.awayTeamScore || 0}`;
               this.previousScores[match.id] = currentScore;
-            } else if (hasGameStarted) {
-              // Game finished - clear timing info
+            } else {
+              // Game finished or not started - clear timing info
               this.matchDetails[match.id].lastUpdateTimestamp = null;
               this.matchDetails[match.id].lastGameTimeSeconds = 0;
               this.matchDetails[match.id].previousGoalCount = 0;
