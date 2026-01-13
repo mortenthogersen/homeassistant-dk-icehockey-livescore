@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.6
+ * Version: 1.0.7
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.6';
+  static VERSION = '1.0.7';
   
   constructor() {
     super();
@@ -25,6 +25,9 @@ class HockeyTickerCard extends HTMLElement {
     this.clockInterval = null;
     this.previousScores = {}; // Track previous scores per match for goal detection
     this.previousGoalCounts = {}; // Track previous goal counts per match for goal detection
+    // Cache for league-matches (fetch once per day)
+    this.cachedLeagueMatches = null;
+    this.cachedLeagueMatchesDate = null;
     
     // Log version for debugging cache issues
     console.log(`[HockeyTickerCard] Version ${HockeyTickerCard.VERSION} loaded at ${new Date().toISOString()}`);
@@ -194,19 +197,43 @@ class HockeyTickerCard extends HTMLElement {
 
   async loadMatches() {
     try {
-      const response = await fetch(this.config.league_matches_url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      // Check if we have cached data for today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      if (data && data.matches) {
-        let matches = data.matches;
+      let matches = null;
+      
+      if (this.cachedLeagueMatches && this.cachedLeagueMatchesDate) {
+        const cachedDate = new Date(this.cachedLeagueMatchesDate);
+        cachedDate.setHours(0, 0, 0, 0);
+        
+        // If cache is from today, use cached data
+        if (cachedDate.getTime() === today.getTime()) {
+          console.log('[Ticker] Using cached league-matches data');
+          matches = this.cachedLeagueMatches;
+        }
+      }
+      
+      // Fetch new data if no cache or different day
+      if (!matches) {
+        console.log('[Ticker] Fetching league-matches data (cache miss or new day)');
+        const response = await fetch(this.config.league_matches_url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        matches = data && data.matches ? data.matches : [];
+        
+        // Cache the data
+        this.cachedLeagueMatches = matches;
+        this.cachedLeagueMatchesDate = new Date();
+      }
+      
+      if (matches && matches.length > 0) {
+        let filteredMatches = matches;
         
         // Filter by date (today) - use start_date to find today's matches
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        matches = matches.filter(match => {
+        filteredMatches = filteredMatches.filter(match => {
           if (!match.start_date) return false;
           const matchDate = new Date(match.start_date);
           matchDate.setHours(0, 0, 0, 0);
@@ -215,7 +242,7 @@ class HockeyTickerCard extends HTMLElement {
         
         // Filter by teams if specified
         if (this.config.teams && this.config.teams.length > 0) {
-          matches = matches.filter(match => {
+          filteredMatches = filteredMatches.filter(match => {
             const homeShortcut = (match.home?.shortcut || '').toUpperCase();
             const guestShortcut = (match.guest?.shortcut || '').toUpperCase();
             return this.config.teams.some(team => 
@@ -225,7 +252,7 @@ class HockeyTickerCard extends HTMLElement {
         }
         
         // Sort: LIVE first, then BEFORE_MATCH (by date), then AFTER_MATCH (most recent first)
-        matches.sort((a, b) => {
+        filteredMatches.sort((a, b) => {
           if (a.status === 'LIVE' && b.status !== 'LIVE') return -1;
           if (b.status === 'LIVE' && a.status !== 'LIVE') return 1;
           if (a.status === 'BEFORE_MATCH' && b.status === 'AFTER_MATCH') return -1;
@@ -243,7 +270,7 @@ class HockeyTickerCard extends HTMLElement {
           return 0;
         });
         
-        this.matches = matches;
+        this.matches = filteredMatches;
         
         // Fetch detailed data for LIVE matches to get accurate time
         // loadLiveMatchDetails will call updateTicker when done

@@ -18,10 +18,10 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
 2. Add the resources to your Home Assistant via the UI:
    - Go to **Settings** → **Dashboards** → **Resources**
    - Click **+ ADD RESOURCE** (or **+** button)
-      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.7`
+      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.8`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
-   - Repeat for `hockey-ticker-card.js?v=1.0.6` and `hockey-table-card.js?v=1.0.0`
+   - Repeat for `hockey-ticker-card.js?v=1.0.7` and `hockey-table-card.js?v=1.0.0`
 
    **Note:** The version query parameter (e.g., `?v=1.0.2`) is used for cache busting. When you update the card files, increment the version number and update the resource URLs to ensure browsers load the latest version.
 
@@ -209,13 +209,21 @@ highlight_teams:
 
 All cards include version information:
 
-- **Hockey Scoreboard Card**: v1.0.7
-- **Hockey Ticker Card**: v1.0.6
+- **Hockey Scoreboard Card**: v1.0.8
+- **Hockey Ticker Card**: v1.0.7
 - **Hockey Table Card**: v1.0.0
 
 Version numbers are displayed in the card UI and logged to the browser console for debugging cache issues.
 
 ### Changelog
+
+#### Hockey Scoreboard Card v1.0.8
+- Optimized: League-matches file is now cached and only fetched once per day (reduces bandwidth usage significantly)
+- Individual match data still updates frequently for live scores
+
+#### Hockey Ticker Card v1.0.7
+- Optimized: League-matches file is now cached and only fetched once per day (reduces bandwidth usage significantly)
+- Individual match data still updates frequently for live scores
 
 #### Hockey Scoreboard Card v1.0.7
 - Changed: Default league_id changed from 4 to 1

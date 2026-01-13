@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.7
+ * Version: 1.0.8
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.7';
+  static VERSION = '1.0.8';
   
   constructor() {
     super();
@@ -34,6 +34,9 @@ class HockeyScoreboardCard extends HTMLElement {
     this.otherMatches = [];
     this.otherMatchDetails = {};
     this.otherMatchesInterval = null;
+    // Cache for league-matches (fetch once per day)
+    this.cachedLeagueMatches = null;
+    this.cachedLeagueMatchesDate = null;
     
     // Log version for debugging cache issues
     console.log(`[HockeyScoreboardCard] Version ${HockeyScoreboardCard.VERSION} loaded at ${new Date().toISOString()}`);
@@ -316,12 +319,35 @@ class HockeyScoreboardCard extends HTMLElement {
   }
 
   async fetchLeagueMatches() {
+    // Check if we have cached data for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (this.cachedLeagueMatches && this.cachedLeagueMatchesDate) {
+      const cachedDate = new Date(this.cachedLeagueMatchesDate);
+      cachedDate.setHours(0, 0, 0, 0);
+      
+      // If cache is from today, return cached data
+      if (cachedDate.getTime() === today.getTime()) {
+        console.log('[Scoreboard] Using cached league-matches data');
+        return this.cachedLeagueMatches;
+      }
+    }
+    
+    // Fetch new data (either no cache or different day)
+    console.log('[Scoreboard] Fetching league-matches data (cache miss or new day)');
     const response = await fetch(this.config.league_matches_url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return data.matches || [];
+    const matches = data.matches || [];
+    
+    // Cache the data
+    this.cachedLeagueMatches = matches;
+    this.cachedLeagueMatchesDate = new Date();
+    
+    return matches;
   }
 
   findTodayMatch(matches) {
