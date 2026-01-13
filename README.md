@@ -32,7 +32,25 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
    - The file will be accessible at `/local/league-matches/2025/1.json`
    - **Note:** You may want to set up a script or automation to update this file daily, as it contains all matches for the season
 
-4. The resources should be available immediately (you may need to refresh your browser).
+4. Set up team logos (optional but recommended to prevent logo blinking):
+   - Download the team logos using one of the provided scripts:
+     - **Windows (PowerShell):** Run `download-logos.ps1` from the project directory
+     - **Linux/Mac (Bash):** Run `chmod +x download-logos.sh && ./download-logos.sh`
+   - Or manually download from: `https://den.hokejovyzapis.cz/img/logos/1.png` through `9.png`
+   - Copy the `team-logos` folder to your Home Assistant `www` directory
+   - The logos will be accessible at `/local/team-logos/1.png`, `/local/team-logos/2.png`, etc.
+   - **Team mapping:**
+     - 1.png = RUN (Rungsted)
+     - 2.png = SON (SønderjyskE)
+     - 3.png = FRE (Frederikshavn)
+     - 4.png = AAL (Aalborg)
+     - 5.png = ESB (Esbjerg)
+     - 6.png = HER (Herning)
+     - 7.png = HLV (Herlev)
+     - 8.png = ROD (Rødovre)
+     - 9.png = ODE (Odense)
+
+5. The resources should be available immediately (you may need to refresh your browser).
 
 ## Team Codes
 

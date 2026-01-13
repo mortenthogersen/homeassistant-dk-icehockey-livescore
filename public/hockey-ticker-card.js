@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.14
+ * Version: 1.0.15
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.14';
+  static VERSION = '1.0.15';
   
   constructor() {
     super();
@@ -53,18 +53,18 @@ class HockeyTickerCard extends HTMLElement {
     }
   }
 
-  // Team logo mapping
+  // Team logo mapping - using local files
   getTeamLogoUrl(shortcut) {
     const logoMap = {
-      'RUN': 'https://den.hokejovyzapis.cz/img/logos/1.png',
-      'SON': 'https://den.hokejovyzapis.cz/img/logos/2.png',
-      'FRE': 'https://den.hokejovyzapis.cz/img/logos/3.png',
-      'AAL': 'https://den.hokejovyzapis.cz/img/logos/4.png',
-      'ESB': 'https://den.hokejovyzapis.cz/img/logos/5.png',
-      'HER': 'https://den.hokejovyzapis.cz/img/logos/6.png',
-      'HLV': 'https://den.hokejovyzapis.cz/img/logos/7.png',
-      'ROD': 'https://den.hokejovyzapis.cz/img/logos/8.png',
-      'ODE': 'https://den.hokejovyzapis.cz/img/logos/9.png'
+      'RUN': '/local/team-logos/1.png',
+      'SON': '/local/team-logos/2.png',
+      'FRE': '/local/team-logos/3.png',
+      'AAL': '/local/team-logos/4.png',
+      'ESB': '/local/team-logos/5.png',
+      'HER': '/local/team-logos/6.png',
+      'HLV': '/local/team-logos/7.png',
+      'ROD': '/local/team-logos/8.png',
+      'ODE': '/local/team-logos/9.png'
     };
     return logoMap[shortcut.toUpperCase()] || null;
   }
