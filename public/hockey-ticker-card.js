@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.8
+ * Version: 1.0.9
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.8';
+  static VERSION = '1.0.9';
   
   constructor() {
     super();
@@ -217,11 +217,14 @@ class HockeyTickerCard extends HTMLElement {
       // Fetch new data if no cache or different day
       if (!matches) {
         console.log('[Ticker] Fetching league-matches data (cache miss or new day)');
+        console.log('[Ticker] URL:', this.config.league_matches_url);
         const response = await fetch(this.config.league_matches_url);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          console.error('[Ticker] HTTP error:', response.status, response.statusText);
+          throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
         }
         const data = await response.json();
+        console.log('[Ticker] Loaded data:', data ? 'success' : 'null', 'matches count:', data && data.matches ? data.matches.length : 0);
         matches = data && data.matches ? data.matches : [];
         
         // Cache the data
@@ -281,12 +284,18 @@ class HockeyTickerCard extends HTMLElement {
         this.updateTicker();
       }
     } catch (error) {
-      console.error('Error loading matches:', error);
+      console.error('[Ticker] Error loading matches:', error);
+      console.error('[Ticker] Error details:', {
+        message: error.message,
+        url: this.config.league_matches_url,
+        stack: error.stack
+      });
       // Show error message instead of staying on "Loading..."
       this.matches = [];
       const tickerEl = this.shadowRoot.querySelector('#tickerContent');
       if (tickerEl) {
-        tickerEl.innerHTML = '<div class="ticker-item">Fejl ved indlæsning af kampe</div>';
+        const errorMsg = `Fejl: ${error.message}`;
+        tickerEl.innerHTML = `<div class="ticker-item">${errorMsg}</div>`;
         tickerEl.style.width = '100%';
       }
     }

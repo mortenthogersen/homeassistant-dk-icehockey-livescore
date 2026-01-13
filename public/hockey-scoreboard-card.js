@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.9
+ * Version: 1.0.10
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.9';
+  static VERSION = '1.0.10';
   
   constructor() {
     super();
@@ -149,9 +149,14 @@ class HockeyScoreboardCard extends HTMLElement {
         return;
       }
     } catch (error) {
-      console.error('Error fetching league matches:', error);
+      console.error('[Scoreboard] Error fetching league matches:', error);
+      console.error('[Scoreboard] Error details:', {
+        message: error.message,
+        url: this.config.league_matches_url,
+        stack: error.stack
+      });
       this.hideScoreboard();
-      this.showError('Kunne ikke indlæse kamp program');
+      this.showError(`Kunne ikke indlæse kamp program: ${error.message}`);
       this.config.data_url = null;
       this.config.game_id = null;
       return;
@@ -336,11 +341,14 @@ class HockeyScoreboardCard extends HTMLElement {
     
     // Fetch new data (either no cache or different day)
     console.log('[Scoreboard] Fetching league-matches data (cache miss or new day)');
+    console.log('[Scoreboard] URL:', this.config.league_matches_url);
     const response = await fetch(this.config.league_matches_url);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.error('[Scoreboard] HTTP error:', response.status, response.statusText);
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
     }
     const data = await response.json();
+    console.log('[Scoreboard] Loaded data:', data ? 'success' : 'null', 'matches count:', data && data.matches ? data.matches.length : 0);
     const matches = data.matches || [];
     
     // Cache the data
