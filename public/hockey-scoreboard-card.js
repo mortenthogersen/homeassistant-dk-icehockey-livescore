@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.10
+ * Version: 1.0.11
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.10';
+  static VERSION = '1.0.11';
   
   constructor() {
     super();
@@ -518,7 +518,13 @@ class HockeyScoreboardCard extends HTMLElement {
         const gameData = data.data.gameData;
         
         // Check if match hasn't started yet (BEFORE_MATCH status from league-matches)
-        const isBeforeMatch = this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH';
+        // Prioritize actual game data - if game has started, ignore BEFORE_MATCH status
+        const hasGameStarted = (gameData.liveTime > 0) || 
+                              (gameData.liveTimePeriod > 0) || 
+                              (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0) ||
+                              (gameData.liveTimeString && gameData.liveTimeString !== 'BEFORE_MATCH');
+        
+        const isBeforeMatch = !hasGameStarted && (this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH');
         
         // Game is finished only if it's END-GAME AND not a BEFORE_MATCH match
         // For BEFORE_MATCH, gameStatus might be 0 meaning "not started", not "finished"
@@ -861,12 +867,19 @@ class HockeyScoreboardCard extends HTMLElement {
     const gameData = this.gameData.data.gameData;
     const periodEl = this.shadowRoot.querySelector('#period');
 
-    // Check if game hasn't started yet (BEFORE_MATCH) - check this FIRST
-    // We can detect this from liveTimeString or by checking if we have match info
-    // For BEFORE_MATCH matches, gameStatus might be 0 meaning "not started", not "finished"
-    const isBeforeMatch = this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH' ||
-                         gameData.liveTimeString === 'BEFORE_MATCH' || 
-                         (gameData.liveTime === 0 && gameData.liveTimePeriod === 0 && !gameData.liveTimeString);
+    // Check if game hasn't started yet (BEFORE_MATCH)
+    // Prioritize actual game data over league-matches status
+    // If game has liveTime, scores, or period > 0, it's live (not before match)
+    const hasGameStarted = (gameData.liveTime > 0) || 
+                          (gameData.liveTimePeriod > 0) || 
+                          (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0) ||
+                          (gameData.liveTimeString && gameData.liveTimeString !== 'BEFORE_MATCH');
+    
+    const isBeforeMatch = !hasGameStarted && (
+      (this.currentMatchInfo && this.currentMatchInfo.status === 'BEFORE_MATCH') ||
+      gameData.liveTimeString === 'BEFORE_MATCH' || 
+      (gameData.liveTime === 0 && gameData.liveTimePeriod === 0 && !gameData.liveTimeString)
+    );
     
     if (isBeforeMatch) {
       // Game hasn't started - show scheduled start time with "Kommende kamp"
