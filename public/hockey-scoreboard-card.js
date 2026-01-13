@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.12
+ * Version: 1.0.13
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.12';
+  static VERSION = '1.0.13';
   
   constructor() {
     super();
@@ -100,21 +100,78 @@ class HockeyScoreboardCard extends HTMLElement {
   }
   
   updateOtherTeamsRunningTimes() {
-    // Update running times for live matches in other teams list
-    this.otherMatches.forEach(match => {
-      if (match.status === 'LIVE' || match.status === 'DURING_MATCH') {
-        const matchDetail = this.otherMatchDetails[match.id];
-        if (matchDetail && matchDetail.gameData) {
-          const gameData = matchDetail.gameData;
-          if (gameData.liveTimeString !== 'END-GAME' && gameData.gameStatus !== 0) {
-            if (!gameData.liveTimeGamePhase || !gameData.liveTimeGamePhase.toUpperCase().includes('INTERMISSION')) {
-              // Game is live and not in intermission - update display
-              this.updateOtherTeamsDisplay();
-            }
-          }
+    // Update only the status/time and scores for live matches without regenerating entire HTML
+    // This prevents logo blinking by preserving image elements
+    const listEl = this.shadowRoot.querySelector('#otherTeamsList');
+    if (!listEl || this.otherMatches.length === 0) return;
+    
+    // Update status/time and scores for each live match
+    for (const match of this.otherMatches) {
+      const matchDetail = this.otherMatchDetails[match.id];
+      if (!matchDetail || !matchDetail.gameData) continue;
+      
+      const gameData = matchDetail.gameData;
+      
+      // Check if match is actually live (prioritize game data over status)
+      const hasGameStarted = (gameData.liveTime > 0) || 
+                            (gameData.liveTimePeriod > 0) || 
+                            (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
+      
+      if (!hasGameStarted) continue;
+      
+      if (gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0) {
+        continue; // Game finished, don't update
+      }
+      
+      if (gameData.liveTimeGamePhase && gameData.liveTimeGamePhase.toUpperCase().includes('INTERMISSION')) {
+        continue; // In intermission, don't update
+      }
+      
+      // Find the status and score elements for this match
+      const statusEl = listEl.querySelector(`span.other-team-status[data-match-id="${match.id}"]`);
+      const homeScoreEl = listEl.querySelector(`span.other-team-score[data-match-id="${match.id}"][data-side="home"]`);
+      const guestScoreEl = listEl.querySelector(`span.other-team-score[data-match-id="${match.id}"][data-side="guest"]`);
+      
+      if (!statusEl) continue; // Element not found, might need full update
+      
+      // Calculate period and time
+      const period = this.translatePeriod(gameData.liveTimePeriod || gameData.liveTimeGamePhase || '');
+      const currentPeriod = gameData.liveTimePeriod || 1;
+      
+      let periodTimeDisplay = '';
+      const approximatePeriodTime = this.getApproximateGameTimeForOther(match.id);
+      if (approximatePeriodTime !== null) {
+        const time = this.formatGameTimeForOther(approximatePeriodTime);
+        periodTimeDisplay = period && time ? `${period} - ${time}` : (period || time || '');
+      } else {
+        const time = this.formatTimeForOtherDisplay(gameData.liveTimeFormatted || '', currentPeriod);
+        periodTimeDisplay = period && time ? `${period} - ${time}` : (period || time || '');
+      }
+      
+      // Update status element
+      if (statusEl.textContent !== periodTimeDisplay) {
+        statusEl.textContent = periodTimeDisplay;
+        // Update class if needed
+        if (!statusEl.classList.contains('live')) {
+          statusEl.className = 'other-team-status live';
         }
       }
-    });
+      
+      // Update scores
+      const homeScore = gameData.homeTeamScore || 0;
+      const guestScore = gameData.awayTeamScore || 0;
+      
+      if (homeScoreEl && homeScoreEl.textContent !== String(homeScore)) {
+        homeScoreEl.textContent = homeScore;
+      }
+      
+      if (guestScoreEl && guestScoreEl.textContent !== String(guestScore)) {
+        guestScoreEl.textContent = guestScore;
+      }
+    }
+    
+    // Only regenerate full HTML if matches have changed (not just time updates)
+    // This is handled by loadOtherTeamsMatches() which calls updateOtherTeamsDisplay()
   }
 
   async initializeGame() {
@@ -773,7 +830,17 @@ class HockeyScoreboardCard extends HTMLElement {
     
     const matchDetail = this.otherMatchDetails[match.id];
     
-    if (match.status === 'LIVE' || match.status === 'DURING_MATCH') {
+    // Check if match is actually live (prioritize game data over league-matches status)
+    let isActuallyLive = false;
+    if (matchDetail && matchDetail.gameData) {
+      const gameData = matchDetail.gameData;
+      isActuallyLive = (gameData.liveTime > 0) || 
+                      (gameData.liveTimePeriod > 0) || 
+                      (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0) ||
+                      (gameData.liveTimeString && gameData.liveTimeString !== 'BEFORE_MATCH');
+    }
+    
+    if (match.status === 'LIVE' || match.status === 'DURING_MATCH' || isActuallyLive) {
       statusClass = 'live';
       
       if (matchDetail && matchDetail.gameData) {
@@ -806,7 +873,7 @@ class HockeyScoreboardCard extends HTMLElement {
         }
         periodTimeDisplay = period && time ? `${period} - ${time}` : (period || time || '');
       }
-    } else if (match.status === 'BEFORE_MATCH') {
+    } else if (match.status === 'BEFORE_MATCH' && !isActuallyLive) {
       statusClass = 'upcoming';
       statusText = this.formatStartTime(match.start_date) || '';
     } else if (match.status === 'AFTER_MATCH') {
@@ -819,15 +886,15 @@ class HockeyScoreboardCard extends HTMLElement {
     }
     
     return `
-      <div class="other-team-item">
+      <div class="other-team-item" data-match-id="${match.id}">
         ${homeLogo ? `<img src="${homeLogo}" class="other-team-logo" onerror="this.style.display='none'">` : ''}
         <span class="other-team-name">${homeShortcut}</span>
-        <span class="other-team-score">${homeScore}</span>
+        <span class="other-team-score" data-match-id="${match.id}" data-side="home">${homeScore}</span>
         <span class="other-team-separator">-</span>
-        <span class="other-team-score">${guestScore}</span>
+        <span class="other-team-score" data-match-id="${match.id}" data-side="guest">${guestScore}</span>
         <span class="other-team-name">${guestShortcut}</span>
         ${guestLogo ? `<img src="${guestLogo}" class="other-team-logo" onerror="this.style.display='none'">` : ''}
-        <span class="other-team-status ${statusClass}">
+        <span class="other-team-status ${statusClass}" data-match-id="${match.id}">
           ${periodTimeDisplay || statusText || ''}
         </span>
       </div>
