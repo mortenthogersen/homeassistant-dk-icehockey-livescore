@@ -1,5 +1,6 @@
 # Node modules (if any)
 node_modules/
+team-logos/
 
 # Editor directories and files
 .vscode/
