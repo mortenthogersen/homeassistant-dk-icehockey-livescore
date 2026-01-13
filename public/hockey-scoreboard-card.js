@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.14
+ * Version: 1.0.15
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.14';
+  static VERSION = '1.0.15';
   
   constructor() {
     super();
@@ -148,9 +148,12 @@ class HockeyScoreboardCard extends HTMLElement {
         periodTimeDisplay = period && time ? `${period} - ${time}` : (period || time || '');
       }
       
-      // Update status element
-      if (statusEl.textContent !== periodTimeDisplay) {
-        statusEl.textContent = periodTimeDisplay;
+      // Update status element (use innerHTML since periodTimeDisplay contains HTML)
+      // Compare text content to avoid unnecessary updates
+      const currentText = statusEl.textContent || '';
+      const newText = periodTimeDisplay.replace(/<[^>]*>/g, ''); // Strip HTML tags for comparison
+      if (currentText !== newText) {
+        statusEl.innerHTML = periodTimeDisplay;
         // Update class if needed
         if (!statusEl.classList.contains('live')) {
           statusEl.className = 'other-team-status live';

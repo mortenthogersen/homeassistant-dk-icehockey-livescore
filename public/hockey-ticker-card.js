@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.13
+ * Version: 1.0.14
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.13';
+  static VERSION = '1.0.14';
   
   constructor() {
     super();
@@ -138,10 +138,13 @@ class HockeyTickerCard extends HTMLElement {
         }
       }
       
-      // Update status elements
+      // Update status elements (use innerHTML since periodTimeDisplay contains HTML)
       statusElements.forEach(el => {
-        if (el.textContent !== periodTimeDisplay) {
-          el.textContent = periodTimeDisplay;
+        // Compare text content to avoid unnecessary updates
+        const currentText = el.textContent || '';
+        const newText = periodTimeDisplay.replace(/<[^>]*>/g, ''); // Strip HTML tags for comparison
+        if (currentText !== newText) {
+          el.innerHTML = periodTimeDisplay;
           hasUpdates = true;
         }
       });
