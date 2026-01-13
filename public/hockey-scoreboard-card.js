@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Card
- * Version: 1.0.8
+ * Version: 1.0.9
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -15,7 +15,7 @@
  * - Main team and other teams display
  */
 class HockeyScoreboardCard extends HTMLElement {
-  static VERSION = '1.0.8';
+  static VERSION = '1.0.9';
   
   constructor() {
     super();
@@ -77,7 +77,7 @@ class HockeyScoreboardCard extends HTMLElement {
       league_id: config.league_id || 1,
       season: config.season || 2025,
       update_interval: config.update_interval || 10,
-      league_matches_url: `https://s3.dualstack.eu-west-1.amazonaws.com/den.hokejovyzapis.cz/league-matches/${config.season || 2025}/${config.league_id || 1}.json`,
+      league_matches_url: config.league_matches_url || `/local/league-matches/${config.season || 2025}/${config.league_id || 1}.json`,
       // Internal fields (set during initialization)
       game_id: null,
       data_url: null

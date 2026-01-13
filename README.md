@@ -21,11 +21,18 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
       - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.8`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
-   - Repeat for `hockey-ticker-card.js?v=1.0.7` and `hockey-table-card.js?v=1.0.0`
+   - Repeat for `hockey-ticker-card.js?v=1.0.8` and `hockey-table-card.js?v=1.0.0`
 
    **Note:** The version query parameter (e.g., `?v=1.0.2`) is used for cache busting. When you update the card files, increment the version number and update the resource URLs to ensure browsers load the latest version.
 
-3. The resources should be available immediately (you may need to refresh your browser).
+3. Set up the league-matches data file (required for Scoreboard and Ticker cards):
+   - Download the league-matches JSON file from: `https://s3.dualstack.eu-west-1.amazonaws.com/den.hokejovyzapis.cz/league-matches/2025/1.json`
+   - Create the directory structure in your Home Assistant `www` folder: `www/league-matches/2025/`
+   - Save the file as `1.json` in that directory
+   - The file will be accessible at `/local/league-matches/2025/1.json`
+   - **Note:** You may want to set up a script or automation to update this file daily, as it contains all matches for the season
+
+4. The resources should be available immediately (you may need to refresh your browser).
 
 ## Team Codes
 
@@ -99,6 +106,7 @@ A continuous scrolling ticker that displays multiple matches in a marquee-style 
 | `update_interval` | number | No | 10 | Update interval in seconds |
 | `scroll_speed` | number | No | 3 | Seconds per match in the scroll |
 | `teams` | list | No | null | Optional: Filter to show only matches involving these teams (3-letter codes) |
+| `league_matches_url` | string | No | `/local/league-matches/{season}/{league_id}.json` | URL to league-matches JSON file (defaults to local file) |
 
 ### Example Configuration (All Teams)
 
@@ -209,13 +217,24 @@ highlight_teams:
 
 All cards include version information:
 
-- **Hockey Scoreboard Card**: v1.0.8
-- **Hockey Ticker Card**: v1.0.7
+- **Hockey Scoreboard Card**: v1.0.9
+- **Hockey Ticker Card**: v1.0.8
 - **Hockey Table Card**: v1.0.0
 
 Version numbers are displayed in the card UI and logged to the browser console for debugging cache issues.
 
 ### Changelog
+
+#### Hockey Scoreboard Card v1.0.9
+- Changed: Default league-matches URL now uses local file path `/local/league-matches/{season}/{league_id}.json`
+- Can still override with `league_matches_url` config option to use remote URL
+- Improved: Better error handling for missing or invalid league-matches file
+
+#### Hockey Ticker Card v1.0.8
+- Changed: Default league-matches URL now uses local file path `/local/league-matches/{season}/{league_id}.json`
+- Can still override with `league_matches_url` config option to use remote URL
+- Improved: Better error handling - shows error message instead of staying on "Loading..." when file is missing
+- Fixed: Now properly handles empty matches and shows "Ingen kampe" message
 
 #### Hockey Scoreboard Card v1.0.8
 - Optimized: League-matches file is now cached and only fetched once per day (reduces bandwidth usage significantly)

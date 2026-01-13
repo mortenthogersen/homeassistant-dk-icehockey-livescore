@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.7
+ * Version: 1.0.8
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.7';
+  static VERSION = '1.0.8';
   
   constructor() {
     super();
@@ -40,7 +40,7 @@ class HockeyTickerCard extends HTMLElement {
       update_interval: config.update_interval || 10,
       scroll_speed: config.scroll_speed || 3, // seconds per match
       teams: config.teams || null,
-      league_matches_url: `https://s3.dualstack.eu-west-1.amazonaws.com/den.hokejovyzapis.cz/league-matches/${config.season || 2025}/${config.league_id || 1}.json`,
+      league_matches_url: config.league_matches_url || `/local/league-matches/${config.season || 2025}/${config.league_id || 1}.json`,
       ...config
     };
     
@@ -275,9 +275,20 @@ class HockeyTickerCard extends HTMLElement {
         // Fetch detailed data for LIVE matches to get accurate time
         // loadLiveMatchDetails will call updateTicker when done
         await this.loadLiveMatchDetails();
+      } else {
+        // No matches found after filtering - show message
+        this.matches = [];
+        this.updateTicker();
       }
     } catch (error) {
       console.error('Error loading matches:', error);
+      // Show error message instead of staying on "Loading..."
+      this.matches = [];
+      const tickerEl = this.shadowRoot.querySelector('#tickerContent');
+      if (tickerEl) {
+        tickerEl.innerHTML = '<div class="ticker-item">Fejl ved indlæsning af kampe</div>';
+        tickerEl.style.width = '100%';
+      }
     }
   }
 
