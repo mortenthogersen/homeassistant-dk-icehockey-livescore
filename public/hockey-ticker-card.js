@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.11
+ * Version: 1.0.12
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.11';
+  static VERSION = '1.0.12';
   
   constructor() {
     super();
@@ -93,23 +93,80 @@ class HockeyTickerCard extends HTMLElement {
   }
 
   updateRunningTimes() {
-    // Update ticker display to refresh running times for live matches
-    // Only update if we have live matches to avoid unnecessary re-renders
-    const hasLiveMatches = this.matches.some(m => {
-      const matchDetail = this.matchDetails[m.id];
-      if (matchDetail && matchDetail.gameData) {
-        const gameData = matchDetail.gameData;
-        return (gameData.liveTime > 0) || (gameData.liveTimePeriod > 0) || 
-               (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
-      }
-      return m.status === 'LIVE' || m.status === 'DURING_MATCH';
-    });
+    // Update only the status/time and scores for live matches without regenerating entire HTML
+    // This prevents logo blinking by preserving image elements
+    const tickerEl = this.shadowRoot.querySelector('#tickerContent');
+    if (!tickerEl || this.matches.length === 0) return;
     
-    // Only update ticker if we have live matches (to update running times)
-    // This prevents unnecessary re-renders that cause logo blinking
-    if (hasLiveMatches && this.matches.length > 0) {
-      this.updateTicker();
+    let hasUpdates = false;
+    
+    // Update status/time and scores for each live match
+    for (const match of this.matches) {
+      const matchDetail = this.matchDetails[match.id];
+      if (!matchDetail || !matchDetail.gameData) continue;
+      
+      const gameData = matchDetail.gameData;
+      const isLive = (gameData.liveTime > 0) || (gameData.liveTimePeriod > 0) || 
+                     (gameData.homeTeamScore > 0 || gameData.awayTeamScore > 0);
+      
+      if (!isLive) continue;
+      
+      // Find all status elements for this match (there are duplicates for seamless scroll)
+      const statusElements = tickerEl.querySelectorAll(`span.status.live[data-match-id="${match.id}"]`);
+      const homeScoreElements = tickerEl.querySelectorAll(`span.score[data-match-id="${match.id}"][data-side="home"]`);
+      const guestScoreElements = tickerEl.querySelectorAll(`span.score[data-match-id="${match.id}"][data-side="guest"]`);
+      
+      // Calculate period and time
+      const period = this.translatePeriod(gameData.liveTimePeriod || gameData.liveTimeGamePhase || '');
+      let periodTimeDisplay = '';
+      
+      if (gameData.liveTimeString === 'END-GAME' || gameData.gameStatus === 0) {
+        const currentPeriod = gameData.liveTimePeriod || 1;
+        const time = this.formatTimeForDisplay(gameData.liveTimeFormatted || '', currentPeriod);
+        periodTimeDisplay = period ? `${period} - ${time}` : time || 'SLUT';
+      } else if (gameData.liveTimeGamePhase && gameData.liveTimeGamePhase.toUpperCase().includes('INTERMISSION')) {
+        periodTimeDisplay = 'Pause';
+      } else {
+        const approximateTime = this.getApproximateGameTime(match.id);
+        if (approximateTime !== null) {
+          const time = this.formatGameTime(approximateTime);
+          periodTimeDisplay = period && time ? `${period} - ${time}` : (time || period || '');
+        } else {
+          const currentPeriod = gameData.liveTimePeriod || 1;
+          const time = this.formatTimeForDisplay(gameData.liveTimeFormatted || '', currentPeriod);
+          periodTimeDisplay = period && time ? `${period} - ${time}` : (time || period || '');
+        }
+      }
+      
+      // Update status elements
+      statusElements.forEach(el => {
+        if (el.textContent !== periodTimeDisplay) {
+          el.textContent = periodTimeDisplay;
+          hasUpdates = true;
+        }
+      });
+      
+      // Update scores
+      const homeScore = gameData.homeTeamScore || 0;
+      const guestScore = gameData.awayTeamScore || 0;
+      
+      homeScoreElements.forEach(el => {
+        if (el.textContent !== String(homeScore)) {
+          el.textContent = homeScore;
+          hasUpdates = true;
+        }
+      });
+      
+      guestScoreElements.forEach(el => {
+        if (el.textContent !== String(guestScore)) {
+          el.textContent = guestScore;
+          hasUpdates = true;
+        }
+      });
     }
+    
+    // Only regenerate full HTML if matches have changed (not just time updates)
+    // This is handled by loadMatches() which calls updateTicker()
   }
 
   showGoalNotification(data, previousGoalCount) {
@@ -623,15 +680,15 @@ class HockeyTickerCard extends HTMLElement {
       }
       
       display = `
-        <div class="ticker-item">
+        <div class="ticker-item" data-match-id="${match.id}">
           ${homeLogo ? `<img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'">` : ''}
           <span class="team-name">${homeShortcut}</span>
-          <span class="score">${homeScore}</span>
+          <span class="score" data-match-id="${match.id}" data-side="home">${homeScore}</span>
           <span class="separator">-</span>
-          <span class="score">${guestScore}</span>
+          <span class="score" data-match-id="${match.id}" data-side="guest">${guestScore}</span>
           <span class="team-name">${guestShortcut}</span>
           ${guestLogo ? `<img src="${guestLogo}" class="team-logo" onerror="this.style.display='none'">` : ''}
-          <span class="status live">${periodTimeDisplay}</span>
+          <span class="status live" data-match-id="${match.id}">${periodTimeDisplay}</span>
         </div>
       `;
     } else if (match.status === 'BEFORE_MATCH' && !isActuallyLive) {
