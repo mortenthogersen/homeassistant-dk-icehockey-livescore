@@ -1,6 +1,6 @@
 /**
  * Hockey Scoreboard Ticker Card
- * Version: 1.0.5
+ * Version: 1.0.6
  * Last Updated: 10. jan. @ 19.00
  * 
  * Features:
@@ -12,7 +12,7 @@
  * - Wide, narrow format
  */
 class HockeyTickerCard extends HTMLElement {
-  static VERSION = '1.0.5';
+  static VERSION = '1.0.6';
   
   constructor() {
     super();
@@ -32,12 +32,12 @@ class HockeyTickerCard extends HTMLElement {
 
   setConfig(config) {
     this.config = {
-      league_id: config.league_id || 4,
+      league_id: config.league_id || 1,
       season: config.season || 2025,
       update_interval: config.update_interval || 10,
       scroll_speed: config.scroll_speed || 3, // seconds per match
       teams: config.teams || null,
-      league_matches_url: `https://s3.dualstack.eu-west-1.amazonaws.com/den.hokejovyzapis.cz/league-matches/${config.season || 2025}/${config.league_id || 4}.json`,
+      league_matches_url: `https://s3.dualstack.eu-west-1.amazonaws.com/den.hokejovyzapis.cz/league-matches/${config.season || 2025}/${config.league_id || 1}.json`,
       ...config
     };
     
@@ -203,6 +203,16 @@ class HockeyTickerCard extends HTMLElement {
       if (data && data.matches) {
         let matches = data.matches;
         
+        // Filter by date (today) - use start_date to find today's matches
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        matches = matches.filter(match => {
+          if (!match.start_date) return false;
+          const matchDate = new Date(match.start_date);
+          matchDate.setHours(0, 0, 0, 0);
+          return matchDate.getTime() === today.getTime();
+        });
+        
         // Filter by teams if specified
         if (this.config.teams && this.config.teams.length > 0) {
           matches = matches.filter(match => {
@@ -213,9 +223,6 @@ class HockeyTickerCard extends HTMLElement {
             );
           });
         }
-        
-        // Show all matches (finished, live, and upcoming)
-        // No date filtering - show all matches from the league
         
         // Sort: LIVE first, then BEFORE_MATCH (by date), then AFTER_MATCH (most recent first)
         matches.sort((a, b) => {

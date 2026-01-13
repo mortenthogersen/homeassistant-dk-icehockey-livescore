@@ -18,10 +18,10 @@ A collection of custom Home Assistant cards for displaying Danish hockey match i
 2. Add the resources to your Home Assistant via the UI:
    - Go to **Settings** → **Dashboards** → **Resources**
    - Click **+ ADD RESOURCE** (or **+** button)
-      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.6`
+      - Enter the URL with cache busting: `/local/hockey-scoreboard-card.js?v=1.0.7`
    - Set Type to: `JavaScript Module`
    - Click **CREATE**
-   - Repeat for `hockey-ticker-card.js?v=1.0.5` and `hockey-table-card.js?v=1.0.0`
+   - Repeat for `hockey-ticker-card.js?v=1.0.6` and `hockey-table-card.js?v=1.0.0`
 
    **Note:** The version query parameter (e.g., `?v=1.0.2`) is used for cache busting. When you update the card files, increment the version number and update the resource URLs to ensure browsers load the latest version.
 
@@ -53,7 +53,7 @@ Displays a full scoreboard for your main team at the top, with other teams shown
 |--------|------|----------|---------|-------------|
 | `main_team` | string | Yes | - | 3-letter code of the main team to display (e.g., "ODE") |
 | `other_teams` | list | Yes | - | Array of 3-letter team codes to show in the list below (e.g., ["HER", "AAL"]) |
-| `league_id` | number | No | 4 | League ID |
+| `league_id` | number | No | 1 | League ID |
 | `season` | number | No | 2025 | Season year |
 | `update_interval` | number | No | 10 | Update interval in seconds |
 
@@ -71,7 +71,7 @@ other_teams:
   - HER
   - HLV
   - ROD
-league_id: 4
+league_id: 1
 season: 2025
 update_interval: 10
 ```
@@ -94,7 +94,7 @@ A continuous scrolling ticker that displays multiple matches in a marquee-style 
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
-| `league_id` | number | No | 4 | League ID |
+| `league_id` | number | No | 1 | League ID |
 | `season` | number | No | 2025 | Season year |
 | `update_interval` | number | No | 10 | Update interval in seconds |
 | `scroll_speed` | number | No | 3 | Seconds per match in the scroll |
@@ -104,7 +104,7 @@ A continuous scrolling ticker that displays multiple matches in a marquee-style 
 
 ```yaml
 type: custom:hockey-ticker-card
-league_id: 4
+league_id: 1
 season: 2025
 update_interval: 10
 scroll_speed: 3
@@ -124,7 +124,7 @@ teams:
 
 ```yaml
 type: custom:hockey-ticker-card
-league_id: 4
+league_id: 1
 season: 2025
 update_interval: 10
 scroll_speed: 3
@@ -138,7 +138,7 @@ teams:
 
 ```yaml
 type: custom:hockey-ticker-card
-league_id: 4
+league_id: 1
 season: 2025
 update_interval: 10
 scroll_speed: 3
@@ -146,7 +146,8 @@ scroll_speed: 3
 
 ### Notes
 
-- If `teams` is not specified, all matches in the league are shown
+- Shows only today's matches (filtered by start_date)
+- If `teams` is not specified, all of today's matches are shown
 - Live matches are sorted first, followed by upcoming matches (by date), then finished matches (most recent first)
 - Goal notifications appear as a green overlay for live matches
 
@@ -208,13 +209,21 @@ highlight_teams:
 
 All cards include version information:
 
-- **Hockey Scoreboard Card**: v1.0.6
-- **Hockey Ticker Card**: v1.0.5
+- **Hockey Scoreboard Card**: v1.0.7
+- **Hockey Ticker Card**: v1.0.6
 - **Hockey Table Card**: v1.0.0
 
 Version numbers are displayed in the card UI and logged to the browser console for debugging cache issues.
 
 ### Changelog
+
+#### Hockey Scoreboard Card v1.0.7
+- Changed: Default league_id changed from 4 to 1
+- Updated: Now uses league-matches URL and filters matches by start_date for today's matches
+
+#### Hockey Ticker Card v1.0.6
+- Changed: Default league_id changed from 4 to 1
+- Updated: Now filters matches by start_date to show only today's matches (previously showed all matches)
 
 #### Hockey Scoreboard Card v1.0.6
 - Updated: Date format changed to use "@" instead of "kl." (e.g., "10. jan. @ 19.00") for upcoming matches
